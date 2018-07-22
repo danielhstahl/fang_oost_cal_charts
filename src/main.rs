@@ -38,6 +38,12 @@ struct SplineResults {
 }
 
 #[derive(Serialize, Deserialize)]
+struct EmpiricalResults {
+    strike:f64,
+    actual:f64
+}
+
+#[derive(Serialize, Deserialize)]
 struct IntegrationResults {
     u:f64,
     estimate_re:f64,
@@ -63,6 +69,7 @@ fn print_spline<T>(
     obj_params:&[f64],
     min_strike:f64,
     max_strike:f64,
+    max_strike_display:f64,
     rate:f64,
     maturity:f64,
     asset:f64
@@ -76,21 +83,21 @@ where T: Fn(&Complex<f64>, &[f64])->Complex<f64>+std::marker::Sync+std::marker::
         discount, min_strike, max_strike
     );//normalizes the strikes and options...maybe I should change this to so that the input to the function returned is non-normalized?
 
-    let min_log_strike=min_strike.ln(); //symmetric since multiplied by asset
-    let max_log_strike=(max_strike/asset).ln();
-    let log_dk=(max_log_strike-min_log_strike)/((NUM_PLOT-1) as f64);
-
-    let dk_array:Vec<f64>=(0..NUM_PLOT).map(|index|(max_log_strike-(index-1) as f64*log_dk).exp()).collect();
-
-    let option_prices_log_dk=option_pricing::fang_oost_call_price(
+    let max_log_strike=(max_strike_display/asset).ln();
+    let log_dk=(2.0*max_log_strike)/((NUM_PLOT-1) as f64);
+    let mut dk_array=vec![max_strike/asset];
+    dk_array.extend(&mut (0..NUM_PLOT).map(|index|(max_log_strike-(index as f64)*log_dk).exp()));
+    dk_array.push(min_strike/asset);
+      let option_prices_log_dk=option_pricing::fang_oost_call_price(
         NUM_U, 1.0, &dk_array, rate, maturity, |u|(rate*maturity*u+log_cf(u, obj_params)).exp()
-    ); //this prices options over a larger range of strikes
+    ); //this prices options over a larger range of strikes, normalized around asset=1.0
+
     let max_option_price_index=option_prices_log_dk.len()-1;
-    let json_results=json!(
+    let json_results_synthetic=json!(
         option_prices_log_dk
             .iter()
-            .rev()
             .zip(dk_array.iter())
+            .rev()
             .enumerate()
             .filter(|(index, _)|
                 index>&0&&index<&max_option_price_index
@@ -101,6 +108,19 @@ where T: Fn(&Complex<f64>, &[f64])->Complex<f64>+std::marker::Sync+std::marker::
                 }
             ).collect::<Vec<_>>()
     );
+    let json_results_empirical=json!(
+        observed_strikes_options
+            .iter()
+            .map(|(strike, price)|
+                EmpiricalResults {
+                    strike:(strike/asset).ln()-rate*maturity, actual:price/asset-option_calibration::max_zero_or_number(1.0-strike*discount/asset)
+                }
+            ).collect::<Vec<_>>()
+    );
+    let json_results=json!({
+        "synthetic":json_results_synthetic,
+        "empirical":json_results_empirical
+    });
     let mut file = File::create(format!("docs/spline_{}.json", file_name))?;
     file.write_all(json_results.to_string().as_bytes())?;
     Ok(())
@@ -198,6 +218,7 @@ where T: Fn(&Complex<f64>, &[f64])->Complex<f64>+std::marker::Sync+std::marker::
     }
 
     let max_strike=STRIKE_MULTIPLIER*strikes.last().expect("Requires at least one strike");
+    let max_strike_display=max_strike*0.3;
     let min_strike=asset/max_strike;
 
     let mut k_array=vec![max_strike];
@@ -219,8 +240,8 @@ where T: Fn(&Complex<f64>, &[f64])->Complex<f64>+std::marker::Sync+std::marker::
         file_name, &log_cf, 
         &observed_strikes_options, 
         obj_params, min_strike, 
-        max_strike, rate, 
-        maturity, asset
+        max_strike, max_strike_display,
+        rate, maturity, asset
     )?;
     let estimate_of_phi=option_calibration::generate_fo_estimate(
         &observed_strikes_options, asset, 
@@ -280,7 +301,7 @@ fn main()->std::io::Result<()> {
                 cuckoo::UpperLower{lower:0.0, upper:0.6}
             ];
             let param_names=vec!["sigma"];
-            let strikes=vec![4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0];
+            let strikes=vec![4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 20.0];
             let cf=|u:&Complex<f64>, obj_params:&[f64]|{
                 let sigma=obj_params[0];
                 (-sigma.powi(2)*u*0.5+sigma.powi(2)*u*u*0.5)*maturity
@@ -307,7 +328,7 @@ fn main()->std::io::Result<()> {
                 cuckoo::UpperLower{lower:0.0, upper:0.6}
             ];
             let param_names=vec!["sigma"];
-            let strikes=vec![4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0];
+            let strikes=vec![4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 20.0];
             let cf=|u:&Complex<f64>, obj_params:&[f64]|{
                 let sigma=obj_params[0];
                 (-sigma.powi(2)*u*0.5+sigma.powi(2)*u*u*0.5)*maturity
@@ -378,6 +399,28 @@ fn main()->std::io::Result<()> {
                 stock
             )
         },
+        
+       /* 3=>{
+            let observed_strikes_options=vec![
+                (95.0, 85.0),
+                (130.0, 51.5),
+                (150.0, 35.38),
+                (160.0, 28.3),
+                (165.0, 25.2),
+                (170.0, 22.27),
+                (175.0, 19.45),
+                (185.0, 14.77),
+                (190.0, 12.75),
+                (195.0, 11.0),
+                (200.0, 9.35),
+                (210.0, 6.9),
+                (240.0, 2.55),
+                (250.0, 1.88)
+            ];
+            print_spline(
+                ""
+            )
+        },*/
         _=>{
             println!("Choice is not valid!");
             Ok(())

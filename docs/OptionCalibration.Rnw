@@ -23,7 +23,7 @@ All the code is available at the following Github repo: \href{https://github.com
 Levy processes can be constructed with relatively simple characteristic exponents.  In this paper we will focus on processes with characteristic exponents of the following form:
 
 \[\psi(u)=-\frac{\sigma^2 u^2}{2}+\lambda \left(1-e^{\mu_j+\sigma_j ^2 /2}\right)+\lambda \left(e^{\mu_j u i-\sigma_j ^2 u^2 /2}-1\right)\]
-\[=-\frac{\sigma^2 u^2}{2}-\psi_j(-i)+psi_j(u)\]
+\[=-\frac{\sigma^2 u^2}{2}-\psi_j(-i)+\psi_j(u)\]
 Where \(\psi_j(u):=\lambda \left( e^{\mu_j u i-\sigma_j ^2 u^2 /2}-1 \right)\) is the characteristic function of the jump component.  \(\psi(u)\) is the characteristic exponent of a Merton jump-diffusion model.  Following Carr and Wu (2004), we also introduce a random time change so that the characteristic function of the normalized log asset is as follows:
 
 \[\mathbb{E}[e^{ui X_t}]=g(-\psi(u), a, a-\sigma_v \rho u \sigma, \sigma_v, v_0)  \]
@@ -63,7 +63,7 @@ There are three sources of error in the estimate:
 
 \subsubsection{Black Scholes}
 We first test the spline error on a Black-Scholes model.  The parameters chosen are \(S=10\), \(r=0\), \(t=1\), \(\sigma=.3\), and the strike array \(4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16\).
-This model shows very good alignment when choosing a spline on the log of the option price against the strike as can be seen in the following charts.  Note that the black line is estimated, while the red line is actual.  The red line completely covers the black line.
+This model shows very good alignment when choosing a spline on the log of the option price against the strike as can be seen in the following charts.  Note that the black line is estimated, while the red line is actual.  The red line nearly completely covers the black line.
 
 <<echo=FALSE>>=
 require(jsonlite)
@@ -72,25 +72,28 @@ require(jsonlite)
 @
 
 <<echo=FALSE>>=
-plotSpline=function(k){
+plotSpline=function(results){
+  k=results$synthetic
+  o=results$empirical
   plot(k$strike, k$price, type='l', xlab="Strike Price", ylab="Option Price")
   lines(k$strike, k$actual, col='red')
+  points(o$strike, o$actual)
 }
 plotIntegration=function(integration, type){
-  exact=integration[[paste0("exact", type)]]
-  estimate=integration[[paste0("estimate", type)]]
+  exact=integration[[paste0("exact_", type)]]
+  estimate=integration[[paste0("estimate_", type)]]
   plot(integration$u, exact, type='l', xlab="u", ylab="psi(u)", col='blue')
   title(paste0("Actual vs Estimated CF: ", type))
   lines(integration$u, estimate,  col='red')
 }
+base='./'
+#base='~/Documents/Code/rust/fang_oost_cal_charts/docs/'
 
 @
 
 <<fig=T, echo=FALSE>>=
-results=fromJSON(readLines("~/Documents/Code/rust/fang_oost_cal_charts/docs/spline_black_scholes_test_u.json"))
-
+results=fromJSON(readLines(paste0(base, 'spline_black_scholes_test_u.json')))
 plotSpline(results)
-
 @
 
 
@@ -99,25 +102,10 @@ plotSpline(results)
 We then fit the spline for a Heston model.  The parameters chosen are the strike array \((95,100,130,150,160,165,170,175,185,190,195,200,210,240,250)\).
 
 <<fig=T, echo=FALSE>>=
-#heston="Heston"
-#k=read.csv(paste0(baseUrl, heston, globalSpline, ".csv"))
-#plotSpline(k)
-
+results=fromJSON(readLines(paste0(base, 'spline_heston.json')))
+plotSpline(results)
 @
 
-
-\subsubsection{Actual Call prices}
-
-We use Apple call options on January 19 2018 with expiration one year in the future.  The following chart shows the results:
-
-<<fig=T, echo=FALSE>>=
-#appleData=read.csv(paste0(baseUrl, "ActualDataSpline", ".csv"))
-#splineData=read.csv(paste0(baseUrl, "RealDataSpline", ".csv"))
-
-#plot(splineData$strike, splineData$price, type='l', col='blue')
-#points(appleData$strike, appleData$price)
-
-@
 
 \subsection{Numerical Integration Error}
 
@@ -125,18 +113,13 @@ We use Apple call options on January 19 2018 with expiration one year in the fut
 The numerical integration error can be seen as follows:
 
 <<fig=T, echo=FALSE>>=
-#bsU="BlackScholesU"
-#integration=read.csv(paste0(baseUrl, bsU, globalIntegration, ".csv"))
-#plotIntegration(integration, "Real")
-
+results=fromJSON(readLines(paste0(base, 'integrate_black_scholes_test_u.json')))
+plotIntegration(results, "re")
 @
 
 <<fig=T, echo=FALSE>>=
-#plotIntegration(integration, "Im")
-
+plotIntegration(results, "im")
 @
-
-
 
 
 While in theory the integration should be valid over all real numbers, it appears that it is only accurate from \((-2\pi,\,2\pi)\).  However, since the function is even, we don't benefit from using all the domain and truncate it from \((0, 2 \pi)\).
@@ -146,14 +129,13 @@ While in theory the integration should be valid over all real numbers, it appear
 The following plot shows the integration comparison for a Heston model.
 
 <<fig=T, echo=FALSE>>=
-
-#integrationHeston=read.csv(paste0(baseUrl, heston, globalIntegration, ".csv"))
-#plotIntegration(integrationHeston, "Real")
+results=fromJSON(readLines(paste0(base, 'integrate_heston.json')))
+plotIntegration(results, "re")
 
 @
 
 <<fig=T, echo=FALSE>>=
-plotIntegration(integrationHeston, "Im")
+plotIntegration(results, "im")
 @
 
 The model shows very good alignment.
@@ -165,8 +147,8 @@ The model shows very good alignment.
 Estimating the characteristic function at points \(u\) between negative and positive \(2\pi\), we use a Cuckoo algorithm to minimize the sum of the norms of the differences between the estimated and modeled characteristic functions.  For a simple model like Black Scholes we can also use gradient descent, however for more complicated models the output has many local minima.  
 
 <<echo=FALSE>>=
-#bsParameter=read.csv(paste0(baseUrl, bs, globalParameters, ".csv"), header=T)
-#bsParameter
+results=fromJSON(readLines(paste0(base, 'estimate_black_scholes.json')))
+results
 @
 
 \subsubsection{Heston}
@@ -174,29 +156,10 @@ Estimating the characteristic function at points \(u\) between negative and posi
 For more complicated models with many local minima, we use the cuckoo search. The search for a Heston model shows the following results:
 
 <<echo=FALSE>>=
-#hestonParameter=read.csv(paste0(baseUrl, heston, globalParameters, ".csv"), header=T)
-#hestonParameter
+results=fromJSON(readLines(paste0(base, 'estimate_heston.json')))
+results
 @
 
-\section{Real Data}
-
-\subsection{Heston}
-
-The parameters for the Apple data for Heston is the following:
-
-<<echo=FALSE>>=
-#HestonRealParameters=read.csv(paste0(baseUrl, "HestonRealParameters.csv"), header=T)
-#HestonRealParameters
-@
-
-The MSE is the following:
-
-<<echo=FALSE>>=
-#HestonRealMSE=read.csv(paste0(baseUrl, "HestonMSE.csv"), header=T)
-#HestonRealMSE
-@
-
-The parameters are intuitive.
 
 
 \end{document}

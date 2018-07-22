@@ -105,7 +105,7 @@ version = "0.1.0"
 dependencies = [
  "cf_functions 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "cuckoo 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "fang_oost_option 0.18.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fang_oost_option 0.19.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "num-complex 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.70 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.70 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -114,7 +114,7 @@ dependencies = [
 
 [[package]]
 name = "fang_oost_option"
-version = "0.18.0"
+version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "fang_oost 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -364,7 +364,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum dtoa 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)" = "6d301140eb411af13d3115f9a562c85cc6b541ade9dfa314132244aaee7489dd"
 "checksum either 1.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "3be565ca5c557d7f59e7cfcf1844f9e3033650c929c6566f511e8005f205c1d0"
 "checksum fang_oost 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "7fdb58225fa5ecb8b86db3ebb1f7ddf56ccbe8da9d996032de6c7acb7a33ef74"
-"checksum fang_oost_option 0.18.0 (registry+https://github.com/rust-lang/crates.io-index)" = "2ab2af2ccf0fd9ebbacf9facb6e00f31af66454ae32545777cf654f3963d043f"
+"checksum fang_oost_option 0.19.0 (registry+https://github.com/rust-lang/crates.io-index)" = "54b64c544a98ade42d8234f35bac96215f6c7ceea9cf8377daf4e8765792eb52"
 "checksum fuchsia-zircon 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "2e9763c69ebaae630ba35f74888db465e49e259ba1bc0eda7d06f4a067615d82"
 "checksum fuchsia-zircon-sys 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "3dcaa9ae7725d12cdb85b3ad99a434db70b468c09ded17e012d86b5c1010f7a7"
 "checksum itoa 0.4.2 (registry+https://github.com/rust-lang/crates.io-index)" = "5adb58558dcd1d786b5f0bd15f3226ee23486e24b7b58304b60f64dc68e62606"

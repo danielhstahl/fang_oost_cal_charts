@@ -2,3 +2,6 @@
 **/*.rs.bk
 *.json
 *.tex
+*0**.pdf
+*.log
+*.gz
