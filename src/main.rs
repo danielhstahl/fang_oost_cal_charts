@@ -79,19 +79,23 @@ where T: Fn(&Complex<f64>, &[f64])->Complex<f64>+std::marker::Sync+std::marker::
     let min_log_strike=min_strike.ln(); //symmetric since multiplied by asset
     let max_log_strike=(max_strike/asset).ln();
     let log_dk=(max_log_strike-min_log_strike)/((NUM_PLOT-1) as f64);
-    //let mut dk_array=vec![max_strike];
-    let dk_array:Vec<f64>=(0..NUM_PLOT).rev().map(|index|(min_log_strike+index as f64*log_dk).exp()).collect();
-    //dk_array.push(min_strike/asset);
+
+    let dk_array:Vec<f64>=(0..NUM_PLOT).map(|index|(max_log_strike-(index-1) as f64*log_dk).exp()).collect();
 
     let option_prices_log_dk=option_pricing::fang_oost_call_price(
         NUM_U, 1.0, &dk_array, rate, maturity, |u|(rate*maturity*u+log_cf(u, obj_params)).exp()
     ); //this prices options over a larger range of strikes
-
+    let max_option_price_index=option_prices_log_dk.len()-1;
     let json_results=json!(
         option_prices_log_dk
             .iter()
+            .rev()
             .zip(dk_array.iter())
-            .map(|(option_price, k)|
+            .enumerate()
+            .filter(|(index, _)|
+                index>&0&&index<&max_option_price_index
+            )
+            .map(|(_, (option_price, k))|
                 SplineResults {
                     strike:k.ln()-rate*maturity, price:option_calibration::max_zero_or_number(s(*k)), actual:option_price-option_calibration::max_zero_or_number(1.0-k*discount)
                 }

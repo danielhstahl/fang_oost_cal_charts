@@ -67,9 +67,11 @@ This model shows very good alignment when choosing a spline on the log of the op
 
 <<echo=FALSE>>=
 require(jsonlite)
-dir=getSrcDirectory()[1]
-print(dir)
+#dir=getSrcDirectory()[1]
+#print(dir)
+@
 
+<<echo=FALSE>>=
 plotSpline=function(k){
   plot(k$strike, k$price, type='l', xlab="Strike Price", ylab="Option Price")
   lines(k$strike, k$actual, col='red')
