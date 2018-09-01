@@ -7,13 +7,13 @@
 The problem of calibrating option prices to market values (the ``inverse problem'') is non-trivial especially with complex pricing models with many parameters.  A naive approach is to perform optimization by minimizing a distance between the prices provided by the market and the modeled prices by varying the input parameters.  However, this can be computationally intensive.  The problem is not convex and there may be a plethora of local minima. The parameter surface may have many ``flat'' areas leading to unstable parameter solutions.  
 \\
 \\
-Due to the issues arround optimization and given that practioners require efficient market calibration, we choose our pricing modeling framework in light of optimization instead of choosing the framework which may best fit the market.  In a now classic paper, Carr, Madan, Geman, and Yor (2003) demonstrate that asset prices may not have a diffusion component and can be modeled as a pure jump process with infinite activity.  However, Huang and Wu (2004) show that when accounting for the leverage effect, the diffusion component does have a significant impact.  This is due to the empirical fact that asset returns and asset volatility are correlated.  One of the only tractable ways to generate this correlation is by modeling time changes as integrated diffusions.  
+Due to the issues around optimization and given that practitioners require efficient market calibration, we choose our pricing modeling framework in light of optimization instead of choosing the framework which may best fit the market.  In a now classic paper, Carr, Madan, Geman, and Yor (2003) demonstrate that asset prices may not have a diffusion component and can be modeled as a pure jump process with infinite activity.  However, Huang and Wu (2004) show that when accounting for the leverage effect, the diffusion component does have a significant impact.  This is due to the empirical fact that asset returns and asset volatility are correlated.  One of the only tractable ways to generate this correlation is by modeling time changes as integrated diffusions.  
 \\
 \\
 In our study, we find that it is very difficult to solve the inverse problem for Levy-processes of infinite activity.  We therefore eschew the empirical results of CGMY and focus only on finite-activity jump diffusions a la Merton (1976).  However, we do allow for a time-changed diffusion component.  The models thus incorporate popular models like Heston's as a special case.  
 \\
 \\
-All the code is available at the following Github repo: \href{https://github.com/phillyfan1138/FFTOptionPricing/tree/calibrationResults}{FFTOptionPricing}.  
+The code is available at the following Github repo: \href{https://github.com/phillyfan1138/fang_oost_cal_charts}{fang\_oost\_cal\_charts}.  
 
 %Huang and wu: https://pdfs.semanticscholar.org/67cd/b553e2624c79a960ff79d0dfe6e6833690a7.pdf
 %Merton: http://www.people.hbs.edu/rmerton/optionpricingwhenunderlingstock.pdf
