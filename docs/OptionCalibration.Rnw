@@ -3,20 +3,16 @@
 \usepackage{hyperref} 
 \begin{document}
 \SweaveOpts{concordance=TRUE}
-\section{Introduction}
+\section{Option Calibration}
+\setlength{\parindent}{0cm}
+
 The problem of calibrating option prices to market values (the ``inverse problem'') is non-trivial especially with complex pricing models with many parameters.  A naive approach is to perform optimization by minimizing a distance between the prices provided by the market and the modeled prices by varying the input parameters.  However, this can be computationally intensive.  The problem is not convex and there may be a plethora of local minima. The parameter surface may have many ``flat'' areas leading to unstable parameter solutions.  
 \\
 \\
-Due to the issues around optimization and given that practitioners require efficient market calibration, we choose our pricing modeling framework in light of optimization instead of choosing the framework which may best fit the market.  In a now classic paper, Carr, Madan, Geman, and Yor (2003) demonstrate that asset prices may not have a diffusion component and can be modeled as a pure jump process with infinite activity.  However, Huang and Wu (2004) show that when accounting for the leverage effect, the diffusion component does have a significant impact.  This is due to the empirical fact that asset returns and asset volatility are correlated.  One of the only tractable ways to generate this correlation is by modeling time changes as integrated diffusions.  
+In our study, we focus on calibrating models defined in the \href{https://github.com/phillyfan1138/fang_oost_cal_charts/tree/master/docs}{Option Calculation} paper.  We use a jump-diffusion a la \href{http://www.people.hbs.edu/rmerton/optionpricingwhenunderlingstock.pdf}{Merton (1976)} while extending the model to allow for a time-changed diffusion component.  The models thus incorporate popular models like Heston's as a special case.  
 \\
 \\
-In our study, we find that it is very difficult to solve the inverse problem for Levy-processes of infinite activity.  We therefore eschew the empirical results of CGMY and focus only on finite-activity jump diffusions a la Merton (1976).  However, we do allow for a time-changed diffusion component.  The models thus incorporate popular models like Heston's as a special case.  
-\\
-\\
-The code is available at the following Github repo: \href{https://github.com/phillyfan1138/fang_oost_cal_charts}{fang\_oost\_cal\_charts}.  
-
-%Huang and wu: https://pdfs.semanticscholar.org/67cd/b553e2624c79a960ff79d0dfe6e6833690a7.pdf
-%Merton: http://www.people.hbs.edu/rmerton/optionpricingwhenunderlingstock.pdf
+The code which runs the results shown below is available at the following Github repo: \href{https://github.com/phillyfan1138/fang_oost_cal_charts}{fang\_oost\_cal\_charts}.  
 
 \section{The model}
 
@@ -24,7 +20,7 @@ Levy processes can be constructed with relatively simple characteristic exponent
 
 \[\psi(u)=-\frac{\sigma^2 u^2}{2}+\lambda \left(1-e^{\mu_j+\sigma_j ^2 /2}\right)+\lambda \left(e^{\mu_j u i-\sigma_j ^2 u^2 /2}-1\right)\]
 \[=-\frac{\sigma^2 u^2}{2}-\psi_j(-i)+\psi_j(u)\]
-Where \(\psi_j(u):=\lambda \left( e^{\mu_j u i-\sigma_j ^2 u^2 /2}-1 \right)\) is the characteristic function of the jump component.  \(\psi(u)\) is the characteristic exponent of a Merton jump-diffusion model.  Following Carr and Wu (2004), we also introduce a random time change so that the characteristic function of the normalized log asset is as follows:
+Where \(\psi_j(u):=\lambda \left( e^{\mu_j u i-\sigma_j ^2 u^2 /2}-1 \right)\) is the characteristic function of the jump component.  \(\psi(u)\) is the characteristic exponent of a Merton jump-diffusion model.  Following \href{http://faculty.baruch.cuny.edu/lwu/papers/timechangeLevy_JFE2004.pdf}{Carr and Wu (2004)}, we also introduce a random time change so that the characteristic function of the normalized log asset is as follows:
 
 \[\mathbb{E}[e^{ui X_t}]=g(-\psi(u), a, a-\sigma_v \rho u \sigma, \sigma_v, v_0)  \]
 
@@ -44,10 +40,10 @@ Calibration has traditionally taken the following form:
 Where \(w_k\) is a weight, \(\theta\) are the parameters describing the (risk-neutral) asset process, \(C_k\) is the observed option prices at log-strike \(k\), and \(C(k, \theta)\) is the modeled price.  
 \\
 \\
-As mentioned in the introduction, this problem is not trivial.  See Tankov (2004) for details.  Since we are dealing with Levy processes, we instead consider minimizing the following:
+As mentioned in the introduction, this problem is not trivial.  See \href{http://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=E58EF2375731921D342B8965E1AA18C9?doi=10.1.1.155.662&rep=rep1&type=pdf}{Cont and Tankov (2006)} for details.  Since we are dealing with Levy processes, we instead consider minimizing the following:
 \[\min_\theta ||\psi(u_l; \theta)-\hat{\psi}(u_l; k)||\]
 
-We can borrow from Carr and Madan (1999) and  Belomestny and Reiß (2006) to create the estimate \(\hat{\psi}\) from the observed option data:
+We can borrow from \href{http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.348.4044&rep=rep1&type=pdf}{Carr and Madan (1999)} and  \href{http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.90.8837&rep=rep1&type=pdf}{Belomestny and Reiss (2006)} to create the estimate \(\hat{\psi}\) from the observed option data:
 \[ \mathrm{log}\left(1+iu(iu+1)\int_{-\infty} ^{\infty} e^{uix} O(x) dx\right)=\psi(u-i, t)\]
 Where \(O(x)=C_{x+\mathrm{log}(S_0)+rt}/S_0-\left(1-e^{x}/S_0\right)^+\) and \(x=k-\mathrm{log}(S_0)-rt\).  Since we do not observe a continuum of option prices in the market, we use a monotonic spline to interpolate the option prices.  To preserve accuracy, we use a two part spline fit.  The first fit uses the realized \(O_k=C_k/S_0-\left(1-e^{k-rT}\right)^+\) from the minimum log strike until the last strike that satisfies \(e^{k}/S_0 < 1\).  The second fit is the log of normalized option prices \(\mathrm{log}\left(C_k/S_0\right)\) and is fit from the last strike that satisfies \(e^{k}/S_0 < 1\) until the maximum log strike.
 \\
@@ -144,7 +140,7 @@ The model shows very good alignment.
 \subsection{Estimates}
 
 \subsubsection{Black Scholes}
-Estimating the characteristic function at points \(u\) between negative and positive \(2\pi\), we use a Cuckoo algorithm to minimize the sum of the norms of the differences between the estimated and modeled characteristic functions.  For a simple model like Black Scholes we can also use gradient descent, however for more complicated models the output has many local minima.  
+Estimating the characteristic function at points \(u\) between negative and positive \(2\pi\), we use the \href{https://www.cs.tufts.edu/comp/150GA/homeworks/hw3/_reading7\%20Cuckoo\%20search.pdf}{cuckoo search} algorithm to minimize the sum of the norms of the differences between the estimated and modeled characteristic functions.  For a simple model like Black Scholes we can also use gradient descent, however for more complicated models the objective function may have many local minima.  
 
 <<echo=FALSE>>=
 results=fromJSON(readLines(paste0(base, 'estimate_black_scholes.json')))
@@ -153,13 +149,16 @@ results
 
 \subsubsection{Heston}
 
-For more complicated models with many local minima, we use the cuckoo search. The search for a Heston model shows the following results:
+The search for a Heston model shows the following results:
 
 <<echo=FALSE>>=
 results=fromJSON(readLines(paste0(base, 'estimate_heston.json')))
 results
 @
 
+Note that the objective function's surface can be very ``flat'', leading to high variance in the parameters.
 
+\subsection{Cuckoo Search}
+The \href{https://www.cs.tufts.edu/comp/150GA/homeworks/hw3/_reading7\%20Cuckoo\%20search.pdf}{cuckoo search} algorithm is a derivatives-free optimization algorithm which uses Monte Carlo simulations to traverse high-dimensional space.  The algorithm scales well to high dimensions and can achieve an acceptable degree of accuracy quickly.  
 
 \end{document}

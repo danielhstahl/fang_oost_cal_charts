@@ -8,7 +8,7 @@
 
 \section{Model Specification and Background}
 
-We combine the work by \href{http://faculty.baruch.cuny.edu/lwu/papers/timechangeLevy_JFE2004.pdf}{Carr and Wu (2004)}  and the work of \href{https://www.darrellduffie.com/uploads/pubs/DuffiePanSingleton2000.pdf}{Duffie, Pan, and Singleton (2000)} to create a very general framework for option pricing.  The fundamental assumption is that the underlying asset follows a Levy process with a stochastic clock.  This assumption is extremely broad.  Many popular models are contained within this assumption including the \href{http://www.ressources-actuarielles.net/EXT/ISFA/1226.nsf/0/306439500f660d9fc12574860059ce30/$FILE/338705.pdf}{CGMY} model, the Heston model, and the Black Scholes model.  The assumption allows us to construct an analytical or semi-analytical characteristic function which can be inverted to obtain option prices.
+We combine the work by \href{http://faculty.baruch.cuny.edu/lwu/papers/timechangeLevy_JFE2004.pdf}{Carr and Wu (2004)} and the work of \href{https://www.darrellduffie.com/uploads/pubs/DuffiePanSingleton2000.pdf}{Duffie, Pan, and Singleton (2000)} to create a very general framework for option pricing.  The fundamental assumption is that the underlying asset follows a Levy process with a stochastic clock.  This assumption is extremely broad.  Many popular models are contained within this assumption including the \href{http://www.ressources-actuarielles.net/EXT/ISFA/1226.nsf/0/306439500f660d9fc12574860059ce30/$FILE/338705.pdf}{CGMY} model, the Heston model, and the Black Scholes model.  The assumption allows us to construct an analytical or semi-analytical characteristic function which can be inverted to obtain option prices.
 
 \subsection{Practical Constraints}
 
@@ -16,6 +16,9 @@ The stochastic clock (which can be interpreted as ``trading time'' as apposed to
 \\
 \\
 Unfortunately, for practical considerations, this removes most infinite activity models like the CGMY model from consideration.  For a model such as the CGMY model to be practicable, there would need to be an analytical moment generating function for the integral for a mean-reverting CGMY process.  To the best of our knowledge, no such formula exists.  Of course, there is nothing preventing a model that includes a CGMY process and a diffusion component; but the clock would only be correlated with the diffusion component.  Since a benefit of the CGMY process is its ability to capture many market aspects with parsimony, adding several additional parameters simply to induce correlation robs the CGMY process of much of its usefulness.  
+\\
+\\
+In a now classic paper, \href{http://www.ressources-actuarielles.net/EXT/ISFA/1226.nsf/0/306439500f660d9fc12574860059ce30/$FILE/338705.pdf}{Carr, Madan, Geman, and Yor (2003)} demonstrate that asset prices may not have a diffusion component and can be modeled as a pure jump process with infinite activity.  However, \href{http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.199.2574&rep=rep1&type=pdf}{Wu and Huang (2004)} show that when accounting for the leverage effect, the diffusion component does have a significant impact.  This is due to the empirical fact that asset returns and asset volatility are correlated.  
 \\
 \\
 An excellent overview of the various methods for inducing correlation and the possible models is \href{http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.199.2574&rep=rep1&type=pdf}{Wu and Huang (2004)}.  
@@ -144,7 +147,7 @@ The methodology for option pricing uses the \href{http://ta.twi.tudelft.nl/mf/us
 
 \section{Methodology for Calibration}
 
-The methodology for calibration uses the \href{http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.90.8837&rep=rep1&type=pdf}{Belomestny and Reiss} framework.  For more details and tests, see the \href{https://github.com/phillyfan1138/fang_oost_cal_charts/blob/master/docs/OptionCalibration.pdf}{Option Calibration} documentation.
+The methodology for calibration uses the \href{http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.90.8837&rep=rep1&type=pdf}{Belomestny and Reiss (2006)} framework.  For more details and tests, see the \href{https://github.com/phillyfan1138/fang_oost_cal_charts/blob/master/docs/OptionCalibration.pdf}{Option Calibration} documentation.
 
 \section{Simulation}
 
