@@ -6,25 +6,38 @@
 \SweaveOpts{concordance=TRUE}
 \setlength{\parindent}{0cm}
 
-\section{Assumptions of the Levy Functions Repository}
+\section{Model Specification and Background}
 
-We combine the work by Carr and Wu (2004) and the work of Duffie, Pan, and Singleton (2000) to create a very general framework for jump diffusions and stochastic volatility.  Due to specification and calibration issues, we restrict our attention to jump-diffusions and do not consider processes with jumps of infinite activity.  
+We combine the work by \href{http://faculty.baruch.cuny.edu/lwu/papers/timechangeLevy_JFE2004.pdf}{Carr and Wu (2004)}  and the work of \href{https://www.darrellduffie.com/uploads/pubs/DuffiePanSingleton2000.pdf}{Duffie, Pan, and Singleton (2000)} to create a very general framework for option pricing.  The fundamental assumption is that the underlying asset follows a Levy process with a stochastic clock.  This assumption is extremely broad.  Many popular models are contained within this assumption including the \href{http://www.ressources-actuarielles.net/EXT/ISFA/1226.nsf/0/306439500f660d9fc12574860059ce30/$FILE/338705.pdf}{CGMY} model, the Heston model, and the Black Scholes model.  The assumption allows us to construct an analytical or semi-analytical characteristic function which can be inverted to obtain option prices.
 
-\subsection{Specification of stochastic volatility}
+\subsection{Practical Constraints}
+
+The stochastic clock (which can be interpreted as ``trading time'' as apposed to ``calendar time'') must be positive and increasing.  The work by Carr and Wu shows that one can generate a characteristic function that incorporates correlation between the stochastic clock and the underlying asset as long as the clock and the asset have similar Levy processes.  More precisely, correlation can only be induced if both the clock and the asset have either diffusion processes, finite activity processes, or infinite activity processes.  Since the stochastic clock must always be increasing, it is common to model the stochastic process as an integral of a function of the asset price.  For example, Heston's model can be interpreted as an asset following a Brownian Motion with a clock that follows an integrated Cox Ingersoll Ross (CIR) process, with the asset's Brownian Motion being correlated with the clock's Brownian Motion.  
+\\
+\\
+Unfortunately, for practical considerations, this removes most infinite activity models like the CGMY model from consideration.  For a model such as the CGMY model to be practicable, there would need to be an analytical moment generating function for the integral for a mean-reverting CGMY process.  To the best of our knowledge, no such formula exists.  Of course, there is nothing preventing a model that includes a CGMY process and a diffusion component; but the clock would only be correlated with the diffusion component.  Since a benefit of the CGMY process is its ability to capture many market aspects with parsimony, adding several additional parameters simply to induce correlation robs the CGMY process of much of its usefulness.  
+\\
+\\
+An excellent overview of the various methods for inducing correlation and the possible models is \href{http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.199.2574&rep=rep1&type=pdf}{Wu and Huang (2004)}.  
+\\
+\\
+Due to the intractability of the CGMY process, we restrict our attention to jump diffusions for both the asset and the clock.  
+
+\subsection{Specification of Stochastic Volatility}
 Following Carr and Wu, we specify the stochastic time change rather than directly specifying the volatility.  The time change is assumed to take the following form: 
 
 \[\tau=\int_0^t v_s ds \]
 \[v_t=v_0 +\int_0^t a(1-k v_s) ds + \int_0^t \eta \sqrt{v_s} dW^2_s + \delta \sum_{j=1}^{N_t} z_j\]
 Where \(N_t\) follows a Poisson process and the \(z_j\) are independent draws from an almost surely positive distribution.  In this paper, we assume \(z_j \sim \mathrm{exp}(q)\) and that it is independent of every other source of randomness.  Following Carr and Wu, we set the parameters such that the long run expectation of \(v_t\) is \(1\).  Since the the time change impacts the frequency of jumps linearly, the frequency of jumps can be modeled by \(\lambda v_s\).  Hence to adjust the drift to make the long run expectation of \(v_t\) be \(1\), we adjust the drift as follows: \(a\left(1-\left(\frac{\delta\lambda\mathbb{E}[z_j]}{a}+1\right)v_s\right)\) where for simplicity we let \(k=\frac{\delta\lambda\mathbb{E}[z_j]}{a}+1\).
 
-\subsection{Specification of the log asset price}
+\subsection{Specification of the Log Asset Price}
 
 The log asset price is assumed to follow the following form:
 
 \[x_t=\mathrm{log}\left(\frac{S_t}{S_0}\right)=\left(\alpha-\frac{\sigma^2}{2}\right)t+\sigma W^1_t+\sum_{j=1}^{N_t} y_j\]
 Here \(dW^1_t dW^2_t=\rho dt\) and \(N_t\) is the same jump process as the one in the stochastic time change dynamics.  \(y_j\) is assumed to be Gaussian and independent of every other source of randomness.  
 
-\subsection{Risk Neutral log asset price}
+\subsection{Risk Neutral Log Asset Price}
 
 Following Carr and Wu, the risk neutral log price can be modeled as follows (note that the market is incomplete):
 \[x_t=\mathrm{log}\left(\frac{S_t}{S_0}\right)=rt-\left(\frac{\sigma^2}{2}+\lambda \left(e^{\mu_y+\frac{\sigma_y^2}{2}}-1\right) \right)t+\sigma \tilde{W}^1_t+\sum_{j=1}^{N_t} y_j\]
@@ -47,7 +60,7 @@ Where \(\hat{N}_t\) has jump frequency \(v_s\lambda e^{iu y} \).  By Duffie, Pan
 
 \subsection{ODE for Characteristic Function}
 
-\subsubsection{General case}
+\subsubsection{General Case}
 Consider the following functions:
 
 \[\mu(x)=K_0+K_1 x,\, \sigma^2(x)=H_0+H_1 x,\, \lambda(x)=l_0+l_1 x,\, R(x)=\rho_0+\rho_1 x\]
@@ -86,17 +99,52 @@ Substituting and simplifying yields the following ODEs:
 with \(\beta(T)=0,\,\alpha(T)=0\).
 
 \subsubsection{Solution to the ODEs}
+The ODEs do not have an analytical solution, but can be trivially solved numerically.  However, in tests, the calibration speed was extremely slow (on the order of 50 seconds).  Hence we decided to remove the jump correlation and only retain the diffusion correlation.  We still retain the jump aspect of the asset, but do not keep the jump in the clock.  
 
+\section{Final Model}
+
+The final model is specified as follows:
+
+\subsection{Clock}
+
+\[\tau=\int_0^t v_s ds \]
+\[v_t=v_0 +\int_0^t a(1-k v_s) ds + \int_0^t \eta \sqrt{v_s} dW^2_s \]
+This is a CIR process with long run expectation of one.  The CIR bond pricing formula can be interpreted as the moment generating function of the integral of a CIR process, and the analytical expression is leveraged to compute the generalized characteristic function for the time-changed asset price.
+
+\subsection{Specification of the Log Asset Price}
+
+The log asset price is assumed to follow the following form:
+
+\[x_t=\mathrm{log}\left(\frac{S_t}{S_0}\right)=\left(\alpha-\frac{\sigma^2}{2}\right)t+\sigma W^1_t+\sum_{j=1}^{N_t} y_j\]
+Here \(dW^1_t dW^2_t=\rho dt\) and \(N_t\) is a Poisson process.  \(y_j\) is assumed to be Gaussian and independent of every other source of randomness. 
+
+\subsection{Final Characteristic Function}
+
+Following Carr and Wu, the full time changed \(x_\tau\) has the following characteristic function:
+
+\[\phi_x(u)=\mathbb{\hat{E}}\left[ e^{ui rt} e^{\tau \psi(u)} \right]\]
+
+Where 
+\[\psi(u)=\lambda \left(e^{iu \mu_y-\frac{u^2\sigma_y^2}{2}}-1\right)-\frac{\sigma^2}{2} u^2-\left(\frac{\sigma^2}{2}+\lambda \left(e^{\mu_y+\frac{\sigma_y^2}{2}}-1\right)\right)ui \]
+
+
+Under \(\mathbb{\hat{P}}\), \(v_s\) has the following dynamics:
+
+\[v_t=v_0+\int_0 ^ t a\left(1-\left(k-\frac{iu \rho \sigma \eta}{a}\right)v_s\right)ds +\int_0^t \eta \sqrt{v_s} d\hat{W}^2_s\]
+
+Since \(\psi\) is deterministic, the characteristic function can be written as follows:
+
+\[\phi_x(u)=e^{ui rt} g(-\psi(u))\]
+Where \(g(z)=\mathbb{\hat{E}}[e^{-z \tau}]\) is the extended bond pricing formula for a CIR process.
 
 
 \section{Methodology for Option Pricing}
 
-The methodology for option pricing uses the \href{http://engineering.nyu.edu/files/jcfpub.pdf}{Carr-Madan} framework, the 
-\href{https://tspace.library.utoronto.ca/bitstream/1807/19300/1/Surkov_Vladimir_200911_PhD_Thesis.pdf}{Fourier Space Time Step} framework, and the \href{http://ta.twi.tudelft.nl/mf/users/oosterle/oosterlee/COS.pdf}{Fang-Oosterlee} framework.  The code for these frameworks are in the \href{https://github.com/phillyfan1138/FFTOptionPricing}{FFTOptionPricing} repo.  
+The methodology for option pricing uses the \href{http://ta.twi.tudelft.nl/mf/users/oosterle/oosterlee/COS.pdf}{Fang-Oosterlee} framework.  The code is used in the \href{https://github.com/phillyfan1138/fang_oost_option_rust}{fang\_oost\_rust} library.  
 
 \section{Methodology for Calibration}
 
-The methodology for calibration uses the \href{http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.90.8837&rep=rep1&type=pdf}{Belomestny and Reiss} framework.  For more details and tests, see the FFTOptionPricing calibration \href{https://github.com/phillyfan1138/FFTOptionPricing/raw/master/docs/calibration/OptionCalibration.pdf}{documentation}.  
+The methodology for calibration uses the \href{http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.90.8837&rep=rep1&type=pdf}{Belomestny and Reiss} framework.  For more details and tests, see the \href{https://github.com/phillyfan1138/fang_oost_cal_charts/blob/master/docs/OptionCalibration.pdf}{Option Calibration} documentation.
 
 \section{Simulation}
 
@@ -179,7 +227,7 @@ mean(stockPrices)*exp(-r*t)# should be 50 if a martingale
 
 @
 
-This simulation creates bounds that are used to ensure that the numerical implementation of the characteristic function is accurate.  For more details, see the integration tests inside the \href{https://github.com/phillyfan1138/option_price_faas/tree/master/tests/integration}{option_price_faas} repo.  
+This simulation creates bounds that are used to ensure that the numerical implementation of the characteristic function is accurate.  For more details, see the integration tests inside the \href{https://github.com/phillyfan1138/option_price_faas/tree/master/tests/integration}{option\_price\_faas} repo.  
 
 
 \end{document}
