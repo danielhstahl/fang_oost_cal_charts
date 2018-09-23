@@ -87,10 +87,112 @@ base='./'
 
 @
 
+
+
 <<fig=T, echo=FALSE>>=
 results=fromJSON(readLines(paste0(base, 'spline_black_scholes_test_u.json')))
 plotSpline(results)
 @
+
+\subsubsection{Real Data (AAPL on September 21 2018)}
+
+The spline on real data for AAPL at various maturities is plotted as follows.  The plots do not always show a smooth curve which may have impacts on the results.
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.020.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.039.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.058.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.077.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.096.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.116.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.154.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.250.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.327.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.403.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.573.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.749.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_1.324.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_1.746.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_2.321.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
 
 
 \subsubsection{Heston}
