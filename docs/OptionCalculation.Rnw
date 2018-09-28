@@ -198,7 +198,8 @@ generatePricePath=function(m, type){
   for(j in c(1:m)){
     numJ=rpois(1, v*lambda*dt)
     s=s*exp(r*dt-sig*sig*.5*v*dt-lambda*v*dt*(exp(muL+.5*sigL*sigL)-1)+sqrt(abs(v)*dt)*sig*w1[j]+simulateGaussJump(numJ))
-    v=v+a*(1-(delta*lambda/a+1)*v)*dt+eta*sqrt(abs(v)*dt)*w2[j]+simulateExpJump(numJ)
+    #v=v+a*(1-(delta*lambda/a+1)*v)*dt+eta*sqrt(abs(v)*dt)*w2[j]+simulateExpJump(numJ)
+    v=v+a*(1-v)*dt+eta*sqrt(abs(v)*dt)*w2[j]
    # sPath=c(sPath, s)
   }
   #plot(sPath, type='l')
