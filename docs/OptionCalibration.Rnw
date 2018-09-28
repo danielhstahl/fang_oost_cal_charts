@@ -45,7 +45,7 @@ As mentioned in the introduction, this problem is not trivial.  See \href{http:/
 
 We can borrow from \href{http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.348.4044&rep=rep1&type=pdf}{Carr and Madan (1999)} and  \href{http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.90.8837&rep=rep1&type=pdf}{Belomestny and Reiss (2006)} to create the estimate \(\hat{\psi}\) from the observed option data:
 \[ \mathrm{log}\left(1+iu(iu+1)\int_{-\infty} ^{\infty} e^{uix} O(x) dx\right)=\psi(u-i, t)\]
-Where \(O(x)=C_{x+\mathrm{log}(S_0)+rt}/S_0-\left(1-e^{x}/S_0\right)^+\) and \(x=k-\mathrm{log}(S_0)-rt\).  Since we do not observe a continuum of option prices in the market, we use a monotonic spline to interpolate the option prices.  To preserve accuracy, we use a two part spline fit.  The first fit uses the realized \(O_k=C_k/S_0-\left(1-e^{k-rT}\right)^+\) from the minimum log strike until the last strike that satisfies \(e^{k}/S_0 < 1\).  The second fit is the log of normalized option prices \(\mathrm{log}\left(C_k/S_0\right)\) and is fit from the last strike that satisfies \(e^{k}/S_0 < 1\) until the maximum log strike.
+Where \(O(x)=C_{x+\mathrm{log}(S_0)+rt}/S_0-\left(1-e^{x}\right)^+\) and \(x=k-\mathrm{log}(S_0)-rt\).  Since we do not observe a continuum of option prices in the market, we use a monotonic spline to interpolate the option prices.  To preserve accuracy, we use a two part spline fit.  The first fit uses the realized \(O_k=C_k/S_0-\left(1-e^{k-rT}\right)^+\) from the minimum log strike until the last strike that satisfies \(e^{k}/S_0 < 1\).  The second fit is the log of normalized option prices \(\mathrm{log}\left(C_k/S_0\right)\) and is fit from the last strike that satisfies \(e^{k}/S_0 < 1\) until the maximum log strike.
 \\
 \\
 There are three sources of error in the estimate:
@@ -87,10 +87,112 @@ base='./'
 
 @
 
+
+
 <<fig=T, echo=FALSE>>=
 results=fromJSON(readLines(paste0(base, 'spline_black_scholes_test_u.json')))
 plotSpline(results)
 @
+
+\subsubsection{Real Data (AAPL on September 21 2018)}
+
+The spline on real data for AAPL at various maturities is plotted as follows.  The plots do not always show a smooth curve which may have impacts on the results.
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.020.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.039.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.058.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.077.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.096.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.116.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.154.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.250.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.327.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.403.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.573.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_0.749.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_1.324.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_1.746.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
+<<fig=T, echo=FALSE>>=
+results=fromJSON(readLines(paste0(base, 'spline_2.321.json')))
+plot(results$strike, results$actual, type='l', xlab="Strike Price", ylab="Option Price")
+
+@
+
 
 
 \subsubsection{Heston}
