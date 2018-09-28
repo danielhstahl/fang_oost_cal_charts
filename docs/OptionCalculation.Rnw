@@ -46,7 +46,8 @@ Here \(dW^1_t dW^2_t=\rho dt\), \(N_t\) is a Poisson process, \(y_j\) is assumed
 
 Following Carr and Wu, the risk neutral log price can be modeled as follows (note that the market is incomplete):
 \[x_t=\mathrm{log}\left(\frac{S_t}{S_0}\right)=rt-\left(\frac{\sigma^2}{2}+\psi_l(-i)\right)t+\sigma \tilde{W}^1_t+\sum_{j=1}^{N_t} y_j\]
-Where \(\psi_l(u)=\lambda\left(e^{ui\mu_l-\frac{ u^2 \sigma_l^2}{2}}-1\right)+C\Gamma(-Y)\left((M-iu)^Y-M^Y+(G+iu)^Y-G^Y\right)\) is the log of the characteristic function (divided by \(t\)) of the combined Merton and CGMY process.
+Where 
+\[\psi_l(u)=\lambda\left(e^{ui\mu_l-\frac{ u^2 \sigma_l^2}{2}}-1\right)+C\Gamma(-Y)\left((M-iu)^Y-M^Y+(G+iu)^Y-G^Y\right)\] is the log of the characteristic function (divided by \(t\)) of the combined Merton and CGMY process.
 
 \subsection{Analytical Characteristic Function}
 
@@ -55,7 +56,7 @@ Following Carr and Wu, the full time changed \(x_\tau\) has the following charac
 \[\phi_x(u)=\mathbb{\hat{E}}\left[ e^{ui rt} e^{\tau \psi(u)} \right]\]
 
 Where 
-\[\psi(u)=\psi_l(-i)-\frac{\sigma^2}{2} u^2-\left(\frac{\sigma^2}{2}+\psi_l(u)\right)ui \]
+\[\psi(u)=-\psi_l(-i)-\frac{\sigma^2}{2} u^2-\left(\frac{\sigma^2}{2}+\psi_l(u)\right)ui \]
 
 
 Under \(\mathbb{\hat{P}}\), \(v_s\) has the following dynamics:
