@@ -152,7 +152,7 @@ The methodology for option pricing uses the \href{http://ta.twi.tudelft.nl/mf/us
 To check that our option pricing methodology is implemented appropriately, we perform a Monte Carlo simulation:
 
 <<eval=FALSE>>=
-set.seed(42)
+set.seed(41)
 r=.03
 sig=.2
 sigL=.1
@@ -165,19 +165,10 @@ v0=.9
 s0=50
 k=50
 delta=.1
-n=100000 #number of options to simulate
-m=10000 #number of items per path
+n=1000000 #number of options to simulate
+m=1000 #number of items per path
 t=1
 dt=t/(m)
-simulateExpJump=function(numJumps){
-  if(numJumps>0){
-    return(sum(delta*rexp(numJumps, 1.0))) #average of 1
-  }
-  else{
-    return(0)
-  }
-  
-}
 simulateGaussJump=function(numJumps){
   if(numJumps>0){
     return(sum(rnorm(numJumps, muL, sigL)))
@@ -217,15 +208,15 @@ generatePricePath=function(m, type){
 optionPrices=sapply(c(1:n), function(index){
   return(generatePricePath(m, 'option'))
 })
-stockPrices=sapply(c(1:n), function(index){
-  return(generatePricePath(m, 'stock'))
-})
+#stockPrices=sapply(c(1:n), function(index){
+#  return(generatePricePath(m, 'stock'))
+#})
 price=exp(-r*t)*mean(optionPrices)
 bounds=qnorm(.95)*sd(optionPrices)/sqrt(n-1)
 priceLow=price-bounds
 priceHigh=price+bounds
 
-mean(stockPrices)*exp(-r*t)# should be 50 if a martingale
+#mean(stockPrices)*exp(-r*t)# should be 50 if a martingale
 
 @
 
