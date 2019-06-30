@@ -29,7 +29,7 @@ Following Carr and Wu, we specify the stochastic time change rather than directl
 
 \[\tau=\int_0^t v_s ds \]
 \[v_t=v_0 +\int_0^t a(1-k v_s) ds + \int_0^t \eta \sqrt{v_s} dW^2_s + \delta \sum_{j=1}^{N_t} z_j\]
-Where \(N_t\) follows a Poisson process and the \(z_j\) are independent draws from an almost surely positive distribution.  In this paper, we assume \(z_j \sim \mathrm{exp}(q)\) and that it is independent of every other source of randomness.  Following Carr and Wu, we set the parameters such that the long run expectation of \(v_t\) is \(1\).  Since the the time change impacts the frequency of jumps linearly, the frequency of jumps can be modeled by \(\lambda v_s\).  Hence to adjust the drift to make the long run expectation of \(v_t\) be \(1\), we adjust the drift as follows: \(a\left(1-\left(\frac{\delta\lambda\mathbb{E}[z_j]}{a}+1\right)v_s\right)\) where for simplicity we let \(k=\frac{\delta\lambda\mathbb{E}[z_j]}{a}+1\).
+Where \(N_t\) follows a Poisson process and the \(z_j\) are independent draws from an almost surely positive distribution.  In this paper, we assume \(z_j \sim \mathrm{exp}(q)\) and that it is independent of every other source of randomness.  Following Carr and Wu, we set the parameters such that the long run expectation of \(v_t\) is \(1\).  Since the time change impacts the frequency of jumps linearly, the frequency of jumps can be modeled by \(\lambda v_s\).  Hence to adjust the drift to make the long run expectation of \(v_t\) be \(1\), we adjust the drift as follows: \(a\left(1-\left(\frac{\delta\lambda\mathbb{E}[z_j]}{a}+1\right)v_s\right)\) where for simplicity we let \(k=\frac{\delta\lambda\mathbb{E}[z_j]}{a}+1\).
 
 \subsection{Specification of the Log Asset Price}
 
@@ -151,7 +151,8 @@ The methodology for option pricing uses the \href{http://ta.twi.tudelft.nl/mf/us
 
 To check that our option pricing methodology is implemented appropriately, we perform a Monte Carlo simulation:
 
-<<eval=FALSE>>=
+<<>>=
+## Set variables
 set.seed(41)
 r=.03
 sig=.2
@@ -169,6 +170,10 @@ n=1000000 #number of options to simulate
 m=1000 #number of items per path
 t=1
 dt=t/(m)
+@
+
+<<echo=FALSE>>=
+## Define helper functions
 simulateGaussJump=function(numJumps){
   if(numJumps>0){
     return(sum(rnorm(numJumps, muL, sigL)))
@@ -181,17 +186,13 @@ simulateGaussJump=function(numJumps){
 generatePricePath=function(m, type){
   s=s0
   v=v0
- # sPath=c(s)
   w2=rnorm(m)
   w1=w2*rho+rnorm(m)*sqrt(1-rho*rho)
   for(j in c(1:m)){
     numJ=rpois(1, v*lambda*dt)
     s=s*exp(r*dt-sig*sig*.5*v*dt-lambda*v*dt*(exp(muL+.5*sigL*sigL)-1)+sqrt(abs(v)*dt)*sig*w1[j]+simulateGaussJump(numJ))
-    #v=v+a*(1-(delta*lambda/a+1)*v)*dt+eta*sqrt(abs(v)*dt)*w2[j]+simulateExpJump(numJ)
     v=v+a*(1-v)*dt+eta*sqrt(abs(v)*dt)*w2[j]
-   # sPath=c(sPath, s)
   }
-  #plot(sPath, type='l')
   if(type=='option'){
     if(s>k){
       return(s-k)
@@ -203,24 +204,27 @@ generatePricePath=function(m, type){
   else{
     return(s)
   }
-  
 }
+@
+
+<<echo=FALSE>>=
+# Generate option prices and compute bounds
 optionPrices=sapply(c(1:n), function(index){
   return(generatePricePath(m, 'option'))
 })
-#stockPrices=sapply(c(1:n), function(index){
-#  return(generatePricePath(m, 'stock'))
-#})
 price=exp(-r*t)*mean(optionPrices)
 bounds=qnorm(.95)*sd(optionPrices)/sqrt(n-1)
 priceLow=price-bounds
 priceHigh=price+bounds
-
-#mean(stockPrices)*exp(-r*t)# should be 50 if a martingale
-
 @
 
-This simulation creates bounds that are used to ensure that the numerical implementation of the characteristic function is accurate.  For more details, see the integration tests inside the \href{https://github.com/phillyfan1138/option_price_faas/tree/master/tests/integration}{option\_price\_faas} repo.  
+<<>>=
+## Results
+print(priceLow)
+print(priceHigh)
+@
+
+This simulation creates bounds that are used to ensure that the numerical implementation of the characteristic function is accurate.  For more details, see the integration tests inside the \href{https://github.com/realoptions/option_price_faas/blob/d65bd18faedd696a2112f9dd2244cb78d03cca7d/src/lib/maps.rs#L848}{option\_price\_faas} repo.  
 
 
 \end{document}
