@@ -1,8 +1,16 @@
+extern crate argmin;
 extern crate cf_functions;
 extern crate cuckoo;
 extern crate fang_oost_option;
+extern crate finitediff;
 extern crate num_complex;
+extern crate optimization;
 extern crate rayon;
+use argmin::prelude::*;
+use argmin::solver::linesearch::MoreThuenteLineSearch;
+use argmin::solver::quasinewton::LBFGS;
+use finitediff::FiniteDiff;
+
 use rayon::prelude::*;
 use std::collections;
 #[macro_use]
@@ -12,6 +20,7 @@ extern crate serde_derive;
 
 use fang_oost_option::{option_calibration, option_pricing};
 use num_complex::Complex;
+use optimization::{Func, GradientDescent, Minimizer, NumericalDifferentiation};
 use std::f64::consts::PI;
 use std::fs::File;
 use std::io::prelude::*;
@@ -174,14 +183,14 @@ fn get_obj_fn<'a, 'b: 'a, T>(
     phi_hat: &'b [Complex<f64>],
     u_array: &'b [f64],
     maturity: f64,
-    cf_fn: T,
+    log_cf_fn: T,
 ) -> impl Fn(&[f64]) -> f64 + 'a
 where
     T: Fn(&Complex<f64>, &[f64]) -> Complex<f64> + 'b,
 {
-    let local_cf = move |u: &Complex<f64>, _t: f64, params: &[f64]| cf_fn(u, params);
+    let local_log_cf = move |u: &Complex<f64>, _t: f64, params: &[f64]| log_cf_fn(u, params);
     move |params| {
-        option_calibration::obj_fn_arr(&phi_hat, &u_array, &params, maturity, &local_cf)
+        option_calibration::obj_fn_arr(&phi_hat, &u_array, &params, maturity, &local_log_cf)
             / (phi_hat.len() as f64)
     }
 }
@@ -219,7 +228,121 @@ fn print_optimal_parameters(
     Ok(())
 }
 
-fn print_results<T>(
+fn print_optimal_parameters_sgd(
+    file_name: &str,
+    log_cf: &dyn Fn(&Complex<f64>, &[f64]) -> Complex<f64>,
+    obj_params: &[f64],
+    ul: &[cuckoo::UpperLower],
+    param_names: &[&str],
+    u_array: Vec<f64>,
+    phis: Vec<Complex<f64>>,
+    maturity: f64,
+) -> std::io::Result<()> {
+    //let local_cf=|u, t, params|log_cf(u, params);
+    let obj_fn = get_obj_fn(&phis, &u_array, maturity, &log_cf);
+
+    let function = NumericalDifferentiation::new(Func(|x: &[f64]| obj_fn(x)));
+
+    let minimizer = GradientDescent::new();
+    let mid: Vec<f64> = ul
+        .iter()
+        .map(|cuckoo::UpperLower { upper, lower }| (upper + lower) * 0.5)
+        .collect();
+    let solution = minimizer.minimize(&function, mid);
+
+    let json_results = json!(param_names
+        .iter()
+        .zip(obj_params.iter())
+        .zip(solution.position.iter())
+        .map(|((name, param), optimal)| {
+            ParamaterResults {
+                parameter: name.to_string(),
+                actual: *param,
+                optimal: *optimal,
+            }
+        })
+        .collect::<Vec<_>>());
+    let mut file = File::create(format!("docs/estimate_{}.json", file_name))?;
+    file.write_all(json_results.to_string().as_bytes())?;
+    Ok(())
+}
+
+struct LogCF<'a> {
+    //u_array: Vec<f64>,
+    //phis: Vec<Complex<f64>>,
+    //maturity: f64,
+    //log_cf: dyn Fn(&Complex<f64>, &[f64]) -> Complex<f64>,
+    obj_fn: &'a dyn Fn(&[f64]) -> f64,
+}
+
+impl ArgminOp for LogCF<'_> {
+    type Param = Vec<f64>;
+    type Output = f64;
+    type Hessian = Vec<f64>;
+    type Jacobian = ();
+    type Float = f64;
+
+    fn apply(&self, param: &Vec<f64>) -> Result<f64, Error> {
+        let ofn = self.obj_fn;
+        Ok(ofn(&param))
+    }
+
+    fn gradient(&self, param: &Vec<f64>) -> Result<Vec<f64>, Error> {
+        let ofn = self.obj_fn;
+        Ok((*param).central_diff(&|x| ofn(&x)))
+    }
+}
+fn print_optimal_parameters_lgbfs(
+    file_name: &str,
+    log_cf: &dyn Fn(&Complex<f64>, &[f64]) -> Complex<f64>,
+    obj_params: &[f64],
+    ul: &[cuckoo::UpperLower],
+    param_names: &[&str],
+    u_array: Vec<f64>,
+    phis: Vec<Complex<f64>>,
+    maturity: f64,
+) -> std::io::Result<()> {
+    //let local_cf=|u, t, params|log_cf(u, params);
+    let obj_fn = get_obj_fn(&phis, &u_array, maturity, &log_cf);
+
+    let obj_fn = LogCF { obj_fn: &obj_fn };
+
+    let linesearch = MoreThuenteLineSearch::new();
+
+    // Set up solver
+    // m between 3 and 20 yield "good results" according to
+    // http://www.apmath.spbu.ru/cnsa/pdf/monograf/Numerical_Optimization2006.pdf
+    let solver = LBFGS::new(linesearch, 7);
+
+    let mid: Vec<f64> = ul
+        .iter()
+        .map(|cuckoo::UpperLower { upper, lower }| (upper + lower) * 0.5)
+        .collect();
+
+    let res = Executor::new(obj_fn, solver, mid)
+        .add_observer(ArgminSlogLogger::term(), ObserverMode::Always)
+        .max_iters(100)
+        .run()
+        .unwrap();
+
+    let json_results = json!(param_names
+        .iter()
+        .zip(obj_params.iter())
+        .zip(res.state.get_best_param())
+        .map(|((name, param), optimal)| {
+            ParamaterResults {
+                parameter: name.to_string(),
+                actual: *param,
+                optimal: optimal,
+            }
+        })
+        .collect::<Vec<_>>());
+    let mut file = File::create(format!("docs/estimate_{}.json", file_name))?;
+    file.write_all(json_results.to_string().as_bytes())?;
+    Ok(())
+}
+
+fn print_results<T, U>(
     file_name: &str,
     log_cf: T,
     strikes: &[f64],
@@ -230,12 +353,23 @@ fn print_results<T>(
     maturity: f64,
     asset: f64,
     u_array: Vec<f64>,
+    print_optimal_parameters_fn: U,
 ) -> std::io::Result<()>
 where
     T: Fn(&Complex<f64>, &[f64]) -> Complex<f64>
         + std::marker::Sync
         + std::marker::Sized
         + std::marker::Send,
+    U: Fn(
+        &str,
+        &dyn Fn(&Complex<f64>, &[f64]) -> Complex<f64>,
+        &[f64],
+        &[cuckoo::UpperLower],
+        &[&str],
+        Vec<f64>,
+        Vec<Complex<f64>>,
+        f64,
+    ) -> std::io::Result<()>,
 {
     if ul.len() != param_names.len() {
         panic!("Requires ul and param_names to be same length");
@@ -295,7 +429,7 @@ where
 
     print_estimated_cf(file_name, &log_cf, &obj_params, &u_array, &phis)?;
 
-    print_optimal_parameters(
+    print_optimal_parameters_fn(
         file_name,
         &log_cf,
         obj_params,
@@ -336,6 +470,70 @@ where
         maturity,
         asset,
         get_u(NUM_DISCRETE_U_DEFAULT),
+        print_optimal_parameters,
+    )
+}
+
+fn print_results_default_u_sgd<T>(
+    file_name: &str,
+    log_cf: T,
+    strikes: &[f64],
+    obj_params: &[f64],
+    ul: &[cuckoo::UpperLower],
+    param_names: &[&str],
+    rate: f64,
+    maturity: f64,
+    asset: f64,
+) -> std::io::Result<()>
+where
+    T: Fn(&Complex<f64>, &[f64]) -> Complex<f64>
+        + std::marker::Sync
+        + std::marker::Sized
+        + std::marker::Send,
+{
+    print_results(
+        file_name,
+        log_cf,
+        strikes,
+        obj_params,
+        ul,
+        param_names,
+        rate,
+        maturity,
+        asset,
+        get_u(NUM_DISCRETE_U_DEFAULT),
+        print_optimal_parameters_sgd,
+    )
+}
+fn print_results_default_u_lgbfs<T>(
+    file_name: &str,
+    log_cf: T,
+    strikes: &[f64],
+    obj_params: &[f64],
+    ul: &[cuckoo::UpperLower],
+    param_names: &[&str],
+    rate: f64,
+    maturity: f64,
+    asset: f64,
+) -> std::io::Result<()>
+where
+    T: Fn(&Complex<f64>, &[f64]) -> Complex<f64>
+        + std::marker::Sync
+        + std::marker::Sized
+        + std::marker::Send,
+{
+    print_results(
+        file_name,
+        log_cf,
+        strikes,
+        obj_params,
+        ul,
+        param_names,
+        rate,
+        maturity,
+        asset,
+        get_u(NUM_DISCRETE_U_DEFAULT),
+        print_optimal_parameters_lgbfs,
     )
 }
 
@@ -404,6 +602,7 @@ fn main() -> std::io::Result<()> {
                 maturity,
                 stock,
                 u_array,
+                print_optimal_parameters,
             )
         }
         1 => {
@@ -505,8 +704,146 @@ fn main() -> std::io::Result<()> {
                 stock,
             )
         }
-
         3 => {
+            let stock = 178.46;
+            let rate = 0.0;
+            let maturity = 1.0;
+            let b: f64 = 0.0398;
+            let a = 1.5768;
+            let c = 0.5751;
+            let rho = -0.5711;
+            let v0 = 0.0175;
+            let sig = b.sqrt();
+            let speed = a;
+            let v0_hat = v0 / b;
+            let ada_v = c / sig;
+            let obj_params = vec![sig, speed, ada_v, rho, v0_hat];
+
+            let constraints = vec![
+                cuckoo::UpperLower {
+                    lower: 0.0,
+                    upper: 0.6,
+                },
+                cuckoo::UpperLower {
+                    lower: 0.0,
+                    upper: 2.0,
+                },
+                cuckoo::UpperLower {
+                    lower: 0.0,
+                    upper: 4.0,
+                },
+                cuckoo::UpperLower {
+                    lower: -1.0,
+                    upper: 1.0,
+                },
+                cuckoo::UpperLower {
+                    lower: 0.0,
+                    upper: 2.0,
+                },
+            ];
+            let param_names = vec!["sigma", "speed", "ada_v", "rho", "v0_hat"];
+            let strikes = vec![
+                95.0, 100.0, 130.0, 150.0, 160.0, 165.0, 170.0, 175.0, 185.0, 190.0, 195.0, 200.0,
+                210.0, 240.0, 250.0,
+            ];
+            let log_cf = |u: &Complex<f64>, obj_params: &[f64]| {
+                let sig = obj_params[0];
+                let speed = obj_params[1];
+                let ada_v = obj_params[2];
+                let rho = obj_params[3];
+                let v0_hat = obj_params[4];
+                cf_functions::cir_log_mgf_cmp(
+                    &(-cf_functions::merton_log_risk_neutral_cf(u, 0.0, 0.0, 0.0, 0.0, sig)),
+                    speed,
+                    &(speed - ada_v * rho * u * sig),
+                    ada_v,
+                    maturity,
+                    v0_hat,
+                )
+            };
+            print_results_default_u_sgd(
+                "heston_sgd",
+                log_cf,
+                &strikes,
+                &obj_params,
+                &constraints,
+                &param_names,
+                rate,
+                maturity,
+                stock,
+            )
+        }
+        4 => {
+            let stock = 178.46;
+            let rate = 0.0;
+            let maturity = 1.0;
+            let b: f64 = 0.0398;
+            let a = 1.5768;
+            let c = 0.5751;
+            let rho = -0.5711;
+            let v0 = 0.0175;
+            let sig = b.sqrt();
+            let speed = a;
+            let v0_hat = v0 / b;
+            let ada_v = c / sig;
+            let obj_params = vec![sig, speed, ada_v, rho, v0_hat];
+
+            let constraints = vec![
+                cuckoo::UpperLower {
+                    lower: 0.0,
+                    upper: 0.6,
+                },
+                cuckoo::UpperLower {
+                    lower: 0.0,
+                    upper: 2.0,
+                },
+                cuckoo::UpperLower {
+                    lower: 0.0,
+                    upper: 4.0,
+                },
+                cuckoo::UpperLower {
+                    lower: -1.0,
+                    upper: 1.0,
+                },
+                cuckoo::UpperLower {
+                    lower: 0.0,
+                    upper: 2.0,
+                },
+            ];
+            let param_names = vec!["sigma", "speed", "ada_v", "rho", "v0_hat"];
+            let strikes = vec![
+                95.0, 100.0, 130.0, 150.0, 160.0, 165.0, 170.0, 175.0, 185.0, 190.0, 195.0, 200.0,
+                210.0, 240.0, 250.0,
+            ];
+            let log_cf = |u: &Complex<f64>, obj_params: &[f64]| {
+                let sig = obj_params[0];
+                let speed = obj_params[1];
+                let ada_v = obj_params[2];
+                let rho = obj_params[3];
+                let v0_hat = obj_params[4];
+                cf_functions::cir_log_mgf_cmp(
+                    &(-cf_functions::merton_log_risk_neutral_cf(u, 0.0, 0.0, 0.0, 0.0, sig)),
+                    speed,
+                    &(speed - ada_v * rho * u * sig),
+                    ada_v,
+                    maturity,
+                    v0_hat,
+                )
+            };
+            print_results_default_u_lgbfs(
+                "heston_lgbfs",
+                log_cf,
+                &strikes,
+                &obj_params,
+                &constraints,
+                &param_names,
+                rate,
+                maturity,
+                stock,
+            )
+        }
+
+        5 => {
             let cp: CalibrationParameters = serde_json::from_str(&args[2])?;
             cp.options_and_rate.iter().for_each(
                 |OptionRate {
