@@ -4,10 +4,10 @@ version = "0.1.0"
 authors = ["Daniel Stahl <danstahl1138@gmail.com>"]
 
 [dependencies]
-fang_oost_option = "0.28"
+fang_oost_option = "0.29.1"
 cf_functions = "0.6.2"
 num-complex = "0.2"
-cuckoo = "0.7.0"
+cuckoo = "0.8"
 serde_json = "1.0"
 serde = "1.0"
 rayon = "1.4.1"
@@ -16,3 +16,6 @@ optimization = "0.2"
 argmin = "0.3"
 finitediff = "0.1"
 [dev-dependencies]
+
+#[features]
+#VERBOSE_FLAG_ALL
