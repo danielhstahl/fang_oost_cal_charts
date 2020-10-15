@@ -90,6 +90,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d0c54bb8f454c567f21197eefcdbf5679d0bd99f2ddbe52e84c77061952e6789"
 
 [[package]]
+name = "black_scholes"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aece270f957242c33170fd16e03a5031ce0f457cf52a0aec1bc6fc1ed229e937"
+dependencies = [
+ "nrfind",
+ "special",
+]
+
+[[package]]
 name = "blake2b_simd"
 version = "0.5.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -199,9 +209,9 @@ dependencies = [
 
 [[package]]
 name = "cuckoo"
-version = "0.7.0"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e25e98dd8a81e3d49440ec997311ced45360169043f5da4e9389e6b36e13caf6"
+checksum = "fcf96c8836499f9af61423b20a0b70a4aeddb5ae3676e9ef7ad8fa4f223ff0ff"
 dependencies = [
  "byteorder",
  "rand 0.5.4",
@@ -272,10 +282,11 @@ dependencies = [
 
 [[package]]
 name = "fang_oost_option"
-version = "0.28.1"
+version = "0.30.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9fc98f9e7a5cb830ae12432e0d7524db775240774dcce2fd6ccedde71ad60ad0"
+checksum = "57b2260bc6522ec9daee05f1e058cdf7fe2289423fd9d55c19620587921b2e36"
 dependencies = [
+ "black_scholes",
  "fang_oost",
  "num",
  "num-complex",
@@ -366,6 +377,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "043175f069eda7b85febe4a74abbaeff828d9f8b448515d3151a14a3542811aa"
 dependencies = [
  "autocfg",
+]
+
+[[package]]
+name = "nrfind"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7305df9ac15a14f878ba0b398faa954cad45d909827aac99757ed547a8a37fa2"
+dependencies = [
+ "num",
 ]
 
 [[package]]

@@ -21,7 +21,7 @@ const generateModel = index => new Promise((resolve, reject) => {
     })
 })
 
-Promise.all([0, 1, 2, 3, 4].map(generateModel))
+Promise.all([0, 1, 2, 3, 4, 5, 6, 7].map(generateModel))
     .then(res => console.log(res))
     .catch(err => {
         console.log(err)
