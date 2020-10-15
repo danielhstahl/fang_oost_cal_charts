@@ -210,7 +210,6 @@ fn get_obj_fn_mse<'a, 'b: 'a, T>(
 where
     T: Fn(&Complex<f64>, f64, &[f64]) -> Complex<f64> + 'b + Sync,
 {
-    let local_cf = move |u: &Complex<f64>, t: f64, params: &[f64]| cf_fn(u, t, params);
     move |params| {
         option_calibration::obj_fn_real(
             num_u,
@@ -219,7 +218,7 @@ where
             max_strike,
             rate,
             &params,
-            &local_cf,
+            &cf_fn,
         )
     }
 }
