@@ -8,12 +8,10 @@ extern crate optimization;
 extern crate rayon;
 use argmin::prelude::*;
 use argmin::solver::linesearch::MoreThuenteLineSearch;
-use argmin::solver::neldermead::NelderMead;
 use argmin::solver::quasinewton::LBFGS;
 use finitediff::FiniteDiff;
 use rayon::prelude::*;
 use std::collections;
-use std::f64::MIN_POSITIVE;
 #[macro_use]
 extern crate serde_json;
 #[macro_use]
@@ -571,33 +569,6 @@ where
     Ok(())
 }
 
-//https://github.com/scipy/scipy/blob/f80aef74992d87e82a64378f0972e2d2f69ca674/scipy/optimize/optimize.py#L473
-fn get_init_simplex(init_guess: &[f64]) -> Vec<Vec<f64>> {
-    let mut init_v: Vec<Vec<f64>> = vec![];
-    let n = init_guess.len();
-    let hj = 0.35;
-    let default_if_zero = 0.00025;
-    for j in 0..n {
-        init_v.push(
-            init_guess
-                .iter()
-                .enumerate()
-                .map(|(i, m)| {
-                    if i == j {
-                        if m.abs() <= MIN_POSITIVE {
-                            default_if_zero
-                        } else {
-                            m * (1.0 + hj)
-                        }
-                    } else {
-                        *m
-                    }
-                })
-                .collect(),
-        );
-    }
-    init_v
-}
 fn print_mse_results_cuckoo<T>(
     file_name: &str,
     log_cf: T,
@@ -663,23 +634,6 @@ where
         rate,
         |u, t: f64, params: &[f64]| (rate * t * u + log_cf(u, params)).exp(),
     );
-    /*let obj_fn = LogCF { obj_fn: &obj_fn };
-
-        let mid: Vec<f64> = ul
-            .iter()
-            .map(|cuckoo::UpperLower { upper, lower }| (upper + lower) * 0.5)
-            .collect();
-        let mut init_v = get_init_simplex(&mid);
-        init_v.push(mid);
-        let solver = NelderMead::new()
-            .with_initial_params(init_v)
-            .sd_tolerance(0.0001);
-        let res = Executor::new(obj_fn, solver, vec![])
-            .add_observer(ArgminSlogLogger::term(), ObserverMode::Always)
-            .max_iters(10000)
-            .run()
-            .unwrap();
-    */
     let (optimal_parameters, _) = cuckoo::optimize(&obj_fn, ul, NEST_SIZE, NUM_SIMS, TOL, || {
         cuckoo::get_rng_system_seed()
     })
