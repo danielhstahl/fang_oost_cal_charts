@@ -119,7 +119,6 @@ where
         |u| (rate * maturity * u + log_cf(u, obj_params)).exp(),
     ); //this prices options over a larger range of strikes, normalized around asset=1.0
 
-    let max_option_price_index = option_prices_log_dk.len() - 1;
     let json_results_synthetic = json!(option_prices_log_dk
         .iter()
         .zip(dk_array.iter())
@@ -489,7 +488,6 @@ where
     }
 
     let max_strike = STRIKE_MULTIPLIER * strikes.last().expect("Requires at least one strike");
-    let min_strike = asset / max_strike;
 
     let option_prices = option_pricing::fang_oost_call_price(
         NUM_U,
@@ -694,7 +692,6 @@ where
         maturity,
         |u| (rate * maturity * u + log_cf(u, obj_params)).exp(),
     );
-    let end_index = option_prices.len() - 1;
     let observed_strikes_options: Vec<option_calibration::OptionData> = option_prices
         .iter()
         .enumerate()
@@ -1376,22 +1373,17 @@ fn main() -> std::io::Result<()> {
                         &mut (0..NUM_PLOT)
                             .map(|index| (max_log_strike - (index as f64) * log_dk).exp()),
                     );
-                    //dk_array.push(min_strike / cp.asset);
-                    let max_option_price_index = dk_array.len() - 1;
                     let json_results_synthetic = json!(dk_array
                         .iter()
                         .rev()
                         .enumerate()
-                        //.filter(|(index, _)| index > &0 && index < &max_option_price_index)
                         .map(|(_, k)| EmpiricalResults {
                             strike: k.ln() - rate * maturity,
                             actual: option_calibration::max_zero_or_number(s(*k))
                         })
                         .collect::<Vec<_>>());
-                    //let stuff:&str="hello";
                     let mut file =
                         File::create(format!("docs/spline_{:.*}.json", 3, maturity)).unwrap();
-                    //let mut file = File::create(format!("docs/estimate_{}.json", "file_name"))?;
 
                     match file.write_all(json_results_synthetic.to_string().as_bytes()) {
                         Ok(_v) => println!("{}", "file written successfully"),
