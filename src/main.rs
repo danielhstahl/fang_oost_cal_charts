@@ -106,10 +106,9 @@ where
 
     let max_log_strike = (max_strike_display / asset).ln();
     let log_dk = (2.0 * max_log_strike) / ((NUM_PLOT - 1) as f64);
-    let mut dk_array = vec![max_strike / asset];
+    let mut dk_array = vec![];
     dk_array
         .extend(&mut (0..NUM_PLOT).map(|index| (max_log_strike - (index as f64) * log_dk).exp()));
-    dk_array.push(min_strike / asset);
     let option_prices_log_dk = option_pricing::fang_oost_call_price(
         NUM_U,
         1.0,
@@ -126,7 +125,7 @@ where
         .zip(dk_array.iter())
         .rev()
         .enumerate()
-        .filter(|(index, _)| index > &0 && index < &max_option_price_index)
+        //.filter(|(index, _)| index > &0 && index < &max_option_price_index)
         .map(|(_, (option_price, k))| SplineResults {
             strike: k.ln() - rate * maturity,
             price: option_calibration::max_zero_or_number(s(*k)),
@@ -392,31 +391,26 @@ where
     }
 
     let max_strike = STRIKE_MULTIPLIER * strikes.last().expect("Requires at least one strike");
-    let min_strike = asset / max_strike;
-
-    let mut k_array = vec![max_strike];
-    k_array.append(&mut strikes.iter().rev().map(|v| *v).collect());
-    k_array.push(min_strike);
-
     let option_prices = option_pricing::fang_oost_call_price(
         NUM_U,
         asset,
-        &k_array,
+        &strikes,
         max_strike,
         rate,
         maturity,
         |u| (rate * maturity * u + log_cf(u, obj_params)).exp(),
     );
-    let end_index = option_prices.len() - 1;
     let observed_strikes_options: Vec<option_calibration::OptionData> = option_prices
         .iter()
         .enumerate()
-        .filter(|(index, _)| index > &0 && index < &end_index)
-        .rev()
         .zip(strikes.iter())
-        .map(|((_, option), strike)| option_calibration::OptionData {
-            price: *option,
-            strike: *strike,
+        .map(|((_, option), strike)| {
+            println!("price: {}", option);
+            println!("strike: {}", strike);
+            option_calibration::OptionData {
+                price: *option,
+                strike: *strike,
+            }
         })
         .collect();
     let full_data: Vec<option_calibration::OptionDataMaturity> =
@@ -497,25 +491,21 @@ where
     let max_strike = STRIKE_MULTIPLIER * strikes.last().expect("Requires at least one strike");
     let min_strike = asset / max_strike;
 
-    let mut k_array = vec![max_strike];
-    k_array.append(&mut strikes.iter().rev().map(|v| *v).collect());
-    k_array.push(min_strike);
-
     let option_prices = option_pricing::fang_oost_call_price(
         NUM_U,
         asset,
-        &k_array,
+        &strikes,
         max_strike,
         rate,
         maturity,
         |u| (rate * maturity * u + log_cf(u, obj_params)).exp(),
     );
-    let end_index = option_prices.len() - 1;
+    //let end_index = option_prices.len() - 1;
     let observed_strikes_options: Vec<option_calibration::OptionData> = option_prices
         .iter()
         .enumerate()
-        .filter(|(index, _)| index > &0 && index < &end_index)
-        .rev()
+        //.filter(|(index, _)| index > &0 && index < &end_index)
+        //.rev()
         .zip(strikes.iter())
         .map(|((_, option), strike)| option_calibration::OptionData {
             price: *option,
@@ -593,27 +583,25 @@ where
     }
 
     let max_strike = STRIKE_MULTIPLIER * strikes.last().expect("Requires at least one strike");
-    let min_strike = asset / max_strike;
+    //let min_strike = asset / max_strike;
 
-    let mut k_array = vec![max_strike];
-    k_array.append(&mut strikes.iter().rev().map(|v| *v).collect());
-    k_array.push(min_strike);
+    //let mut k_array = vec![max_strike];
+    //k_array.append(&mut strikes.iter().rev().map(|v| *v).collect());
+    //k_array.push(min_strike);
 
     let option_prices = option_pricing::fang_oost_call_price(
         NUM_U,
         asset,
-        &k_array,
+        &strikes,
         max_strike,
         rate,
         maturity,
         |u| (rate * maturity * u + log_cf(u, obj_params)).exp(),
     );
-    let end_index = option_prices.len() - 1;
     let observed_strikes_options: Vec<option_calibration::OptionData> = option_prices
         .iter()
         .enumerate()
-        .filter(|(index, _)| index > &0 && index < &end_index)
-        .rev()
+        //filter(|(index, _)| index > &0 && index < &end_index
         .zip(strikes.iter())
         .map(|((_, option), strike)| option_calibration::OptionData {
             price: *option,
@@ -694,13 +682,13 @@ where
     let max_strike_display = max_strike * 0.3;
     let min_strike = asset / max_strike;
 
-    let mut k_array = vec![max_strike];
+    /*let mut k_array = vec![max_strike];
     k_array.append(&mut strikes.iter().rev().map(|v| *v).collect());
-    k_array.push(min_strike);
+    k_array.push(min_strike);*/
     let option_prices = option_pricing::fang_oost_call_price(
         NUM_U,
         asset,
-        &k_array,
+        &strikes,
         max_strike,
         rate,
         maturity,
@@ -710,8 +698,8 @@ where
     let observed_strikes_options: Vec<option_calibration::OptionData> = option_prices
         .iter()
         .enumerate()
-        .filter(|(index, _)| index > &0 && index < &end_index)
-        .rev()
+        //.filter(|(index, _)| index > &0 && index < &end_index)
+        //.rev()
         .zip(strikes.iter())
         .map(|((_, option), strike)| option_calibration::OptionData {
             price: *option,
@@ -1383,18 +1371,18 @@ fn main() -> std::io::Result<()> {
                     ); //normalizes the strikes and options...maybe I should change this to so that the input to the function returned is non-normalized?
                     let max_log_strike = (max_strike * 0.3 / cp.asset).ln();
                     let log_dk = (2.0 * max_log_strike) / ((NUM_PLOT - 1) as f64);
-                    let mut dk_array = vec![max_strike / cp.asset];
+                    let mut dk_array = vec![];
                     dk_array.extend(
                         &mut (0..NUM_PLOT)
                             .map(|index| (max_log_strike - (index as f64) * log_dk).exp()),
                     );
-                    dk_array.push(min_strike / cp.asset);
+                    //dk_array.push(min_strike / cp.asset);
                     let max_option_price_index = dk_array.len() - 1;
                     let json_results_synthetic = json!(dk_array
                         .iter()
                         .rev()
                         .enumerate()
-                        .filter(|(index, _)| index > &0 && index < &max_option_price_index)
+                        //.filter(|(index, _)| index > &0 && index < &max_option_price_index)
                         .map(|(_, k)| EmpiricalResults {
                             strike: k.ln() - rate * maturity,
                             actual: option_calibration::max_zero_or_number(s(*k))

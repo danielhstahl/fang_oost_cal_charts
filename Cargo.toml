@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Daniel Stahl <danstahl1138@gmail.com>"]
 
 [dependencies]
-fang_oost_option = "0.30"
+fang_oost_option = "0.30.1"
 cf_functions = "0.6.2"
 num-complex = "0.2"
 cuckoo = "0.8"
