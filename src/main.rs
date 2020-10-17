@@ -442,7 +442,7 @@ where
 
     let res = Executor::new(obj_fn, solver, mid)
         .add_observer(ArgminSlogLogger::term(), ObserverMode::Always)
-        .max_iters(100)
+        .max_iters(200)
         .run()
         .unwrap();
 
