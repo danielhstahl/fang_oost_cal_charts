@@ -377,7 +377,7 @@ fn print_mse_results<T>(
     asset: f64,
 ) -> std::io::Result<()>
 where
-    T: Fn(&Complex<f64>, &[f64]) -> Complex<f64>
+    T: Fn(&Complex<f64>, f64, &[f64]) -> Complex<f64>
         + std::marker::Sync
         + std::marker::Sized
         + std::marker::Send,
@@ -397,7 +397,7 @@ where
         max_strike,
         rate,
         maturity,
-        |u| (rate * maturity * u + log_cf(u, obj_params)).exp(),
+        |u| (rate * maturity * u + log_cf(u, maturity, obj_params)).exp(),
     );
     let observed_strikes_options: Vec<option_calibration::OptionData> = option_prices
         .iter()
@@ -423,7 +423,7 @@ where
         asset,
         max_strike,
         rate,
-        |u, t: f64, params: &[f64]| (rate * t * u + log_cf(u, params)).exp(),
+        |u, t: f64, params: &[f64]| (rate * t * u + log_cf(u, t, params)).exp(),
     );
 
     let obj_fn = LogCF { obj_fn: &obj_fn };
@@ -727,7 +727,6 @@ where
         max_strike,
     )
     .collect();
-    //let phis=estimate_of_phi(NUM_INTEGRATE, &u_array);
 
     print_estimated_cf(file_name, &log_cf, &obj_params, &u_array, &phis)?;
 
@@ -1255,7 +1254,7 @@ fn main() -> std::io::Result<()> {
                 95.0, 100.0, 130.0, 150.0, 160.0, 165.0, 170.0, 175.0, 185.0, 190.0, 195.0, 200.0,
                 210.0, 240.0, 250.0,
             ];
-            let log_cf = |u: &Complex<f64>, obj_params: &[f64]| {
+            let log_cf = |u: &Complex<f64>, maturity: f64, obj_params: &[f64]| {
                 let sig = obj_params[0];
                 let speed = obj_params[1];
                 let ada_v = obj_params[2];
