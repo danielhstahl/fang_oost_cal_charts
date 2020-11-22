@@ -16,7 +16,7 @@ The documentation is written in [R Sweave](https://www.r-bloggers.com/getting-st
 
 * Clone this repo and cd into the folder
 * `cargo build --release`
-* `node index`
+* `node index `
 * Open [OptionCalibration](./docs/OptionCalibration.rnw) in a Sweave/Latex editor (eg RStudio) and compile.
 
 ## Relevant links

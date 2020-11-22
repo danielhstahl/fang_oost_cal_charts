@@ -32,7 +32,7 @@ struct OptionRate {
 }
 const NUM_SIMS: usize = 1500;
 const NEST_SIZE: usize = 25;
-const TOL: f64 = 0.000001;
+const TOL: f64 = 0.00001;
 const STRIKE_MULTIPLIER: f64 = 10.0;
 const NUM_U: usize = 256;
 const NUM_PLOT: usize = 256;
@@ -581,12 +581,6 @@ where
     }
 
     let max_strike = STRIKE_MULTIPLIER * strikes.last().expect("Requires at least one strike");
-    //let min_strike = asset / max_strike;
-
-    //let mut k_array = vec![max_strike];
-    //k_array.append(&mut strikes.iter().rev().map(|v| *v).collect());
-    //k_array.push(min_strike);
-
     let option_prices = option_pricing::fang_oost_call_price(
         NUM_U,
         asset,
@@ -599,7 +593,6 @@ where
     let observed_strikes_options: Vec<option_calibration::OptionData> = option_prices
         .iter()
         .enumerate()
-        //filter(|(index, _)| index > &0 && index < &end_index
         .zip(strikes.iter())
         .map(|((_, option), strike)| option_calibration::OptionData {
             price: *option,
@@ -680,9 +673,6 @@ where
     let max_strike_display = max_strike * 0.3;
     let min_strike = asset / max_strike;
 
-    /*let mut k_array = vec![max_strike];
-    k_array.append(&mut strikes.iter().rev().map(|v| *v).collect());
-    k_array.push(min_strike);*/
     let option_prices = option_pricing::fang_oost_call_price(
         NUM_U,
         asset,
@@ -695,8 +685,6 @@ where
     let observed_strikes_options: Vec<option_calibration::OptionData> = option_prices
         .iter()
         .enumerate()
-        //.filter(|(index, _)| index > &0 && index < &end_index)
-        //.rev()
         .zip(strikes.iter())
         .map(|((_, option), strike)| option_calibration::OptionData {
             price: *option,

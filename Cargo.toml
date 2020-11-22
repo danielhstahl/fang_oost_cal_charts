@@ -17,5 +17,5 @@ argmin = "0.3"
 finitediff = "0.1"
 [dev-dependencies]
 
-#[features]
-#VERBOSE_FLAG_ALL
+[features]
+VERBOSE_FLAG_ALL=["cuckoo/VERBOSE_FLAG_ALL"]
